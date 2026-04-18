@@ -62,7 +62,9 @@ def build_unified_spec(specs: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
 
     global_actions = list(action_set.keys())
     if not global_actions:
-        raise RuntimeError("Cannot build unified action space from empty action labels.")
+        raise RuntimeError(
+            "Cannot build unified action space from empty action labels."
+        )
 
     return {
         "target_obs_shape": target_obs_shape,
@@ -108,7 +110,9 @@ class UnifiedGVGAIWrapper(gym.Wrapper):
         )
         self.action_space = spaces.Discrete(len(self.global_action_labels))
 
-        local_index_by_label = {label: i for i, label in enumerate(self.local_action_labels)}
+        local_index_by_label = {
+            label: i for i, label in enumerate(self.local_action_labels)
+        }
         self.global_to_local: Dict[int, int] = {}
         for global_idx, label in enumerate(self.global_action_labels):
             if label in local_index_by_label:
@@ -128,7 +132,10 @@ class UnifiedGVGAIWrapper(gym.Wrapper):
         out = np.zeros(self.target_obs_shape, dtype=np.uint8)
 
         # Copy overlapping region.
-        copy_slices = tuple(slice(0, min(arr.shape[i], out.shape[i])) for i in range(min(arr.ndim, out.ndim)))
+        copy_slices = tuple(
+            slice(0, min(arr.shape[i], out.shape[i]))
+            for i in range(min(arr.ndim, out.ndim))
+        )
         out[copy_slices] = arr[copy_slices]
         return out
 
@@ -145,7 +152,9 @@ class UnifiedGVGAIWrapper(gym.Wrapper):
         if local_action is None:
             # Distribute invalid global actions across legal local actions
             # to avoid collapsing all invalid choices to a single command.
-            local_action = self.legal_local_actions[action_int % len(self.legal_local_actions)]
+            local_action = self.legal_local_actions[
+                action_int % len(self.legal_local_actions)
+            ]
         out = self.env.step(local_action)
 
         if len(out) == 4:

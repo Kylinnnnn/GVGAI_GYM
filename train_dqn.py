@@ -116,7 +116,9 @@ def only_lvl0_env_ids(env_ids: List[str]) -> List[str]:
     return [env_id for env_id in env_ids if "-lvl0-" in env_id]
 
 
-def split_env_ids_70_15_15(env_ids: List[str]) -> Tuple[List[str], List[str], List[str]]:
+def split_env_ids_70_15_15(
+    env_ids: List[str],
+) -> Tuple[List[str], List[str], List[str]]:
     ids = sorted(env_ids)
     n = len(ids)
     if n == 0:
@@ -148,8 +150,8 @@ def split_env_ids_70_15_15(env_ids: List[str]) -> Tuple[List[str], List[str], Li
         n_test = 0
 
     train_ids = ids[:n_train]
-    val_ids = ids[n_train:n_train + n_val]
-    test_ids = ids[n_train + n_val:n_train + n_val + n_test]
+    val_ids = ids[n_train : n_train + n_val]
+    test_ids = ids[n_train + n_val : n_train + n_val + n_test]
     return train_ids, val_ids, test_ids
 
 
@@ -206,7 +208,11 @@ def evaluate_trained_agent(agent: Any, env: Any) -> Tuple[float, float]:
         # Keep action indexing in the global unified action space.
         actions = list(range(int(env.action_space.n)))
     else:
-        actions = env.env.GVGAI.actions() if hasattr(env.env, "GVGAI") else list(range(env.action_space.n))
+        actions = (
+            env.env.GVGAI.actions()
+            if hasattr(env.env, "GVGAI")
+            else list(range(env.action_space.n))
+        )
     for episode in range(POST_TRAIN_EVAL_EPISODES):
         ep_idx = episode + 1
         state_obs = safe_reset(env, SEED + episode)
@@ -264,15 +270,17 @@ def write_plots(rows: List[Dict[str, Any]]) -> None:
 def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     os.makedirs(MODEL_DIR, exist_ok=True)
-    reset_output_files([
-        CSV_PATH,
-        JSON_PATH,
-        PLOT_SCORE_PATH,
-        PLOT_WINRATE_PATH,
-        BEST_MODEL_PATH,
-        FINAL_MODEL_PATH,
-        UNIFIED_SPEC_PATH,
-    ])
+    reset_output_files(
+        [
+            CSV_PATH,
+            JSON_PATH,
+            PLOT_SCORE_PATH,
+            PLOT_WINRATE_PATH,
+            BEST_MODEL_PATH,
+            FINAL_MODEL_PATH,
+            UNIFIED_SPEC_PATH,
+        ]
+    )
 
     print("[Stage] Discovering and splitting lvl0 environments...")
 
@@ -329,7 +337,9 @@ def main() -> None:
 
     print("[Stage] Unified training across train split...")
     for round_index in range(1, TRAIN_ROUNDS + 1):
-        print(f"[Round] {round_index}/{TRAIN_ROUNDS} training over {len(train_ids)} environments")
+        print(
+            f"[Round] {round_index}/{TRAIN_ROUNDS} training over {len(train_ids)} environments"
+        )
         for train_env_idx, env_id in enumerate(train_ids, start=1):
             segment_index += 1
             segment_steps = base_steps + (1 if segment_index <= remainder_steps else 0)
@@ -351,7 +361,9 @@ def main() -> None:
             finally:
                 env.close()
 
-        print(f"[Round] {round_index}/{TRAIN_ROUNDS} validating on {len(val_ids)} environments")
+        print(
+            f"[Round] {round_index}/{TRAIN_ROUNDS} validating on {len(val_ids)} environments"
+        )
         val_rows_round: List[Dict[str, Any]] = []
         for val_env_idx, env_id in enumerate(val_ids, start=1):
             print(f"  [Val Progress] env={val_env_idx}/{len(val_ids)} id={env_id}")
@@ -392,32 +404,35 @@ def main() -> None:
 
         val_ok_rows = [x for x in val_rows_round if x["status"] == "ok"]
         if val_ok_rows:
-            mean_val_win_rate = sum(x["win_rate"] for x in val_ok_rows) / len(val_ok_rows)
+            mean_val_win_rate = sum(x["win_rate"] for x in val_ok_rows) / len(
+                val_ok_rows
+            )
             mean_val_score = sum(x["avg_score"] for x in val_ok_rows) / len(val_ok_rows)
             print(
                 f"[Round Val] round={round_index} mean_win_rate={mean_val_win_rate:.4f} "
                 f"mean_avg_score={mean_val_score:.4f}"
             )
-            is_better = (
-                (mean_val_win_rate > best_val_win_rate)
-                or (
-                    abs(mean_val_win_rate - best_val_win_rate) <= 1e-12
-                    and mean_val_score > best_val_score
-                )
+            is_better = (mean_val_win_rate > best_val_win_rate) or (
+                abs(mean_val_win_rate - best_val_win_rate) <= 1e-12
+                and mean_val_score > best_val_score
             )
             if is_better:
                 best_val_win_rate = mean_val_win_rate
                 best_val_score = mean_val_score
                 best_round = round_index
                 agent.save(BEST_MODEL_PATH)
-                print(f"[Checkpoint] New best validation model saved -> {BEST_MODEL_PATH}")
+                print(
+                    f"[Checkpoint] New best validation model saved -> {BEST_MODEL_PATH}"
+                )
         else:
             print(f"[Round Val] round={round_index} no successful validation runs")
 
     print("[Stage] Saving final unified model...")
     agent.save(FINAL_MODEL_PATH)
 
-    model_for_test = BEST_MODEL_PATH if os.path.exists(BEST_MODEL_PATH) else FINAL_MODEL_PATH
+    model_for_test = (
+        BEST_MODEL_PATH if os.path.exists(BEST_MODEL_PATH) else FINAL_MODEL_PATH
+    )
     print(f"[Stage] Final test will use model -> {model_for_test}")
 
     print(f"[Stage] Running final test on {len(test_ids)} environments...")
@@ -441,7 +456,9 @@ def main() -> None:
                 "model_path": model_for_test,
                 "error": "",
             }
-            print(f"  [Test OK] {env_id} avg_score={avg_score:.3f} win_rate={win_rate:.3f}")
+            print(
+                f"  [Test OK] {env_id} avg_score={avg_score:.3f} win_rate={win_rate:.3f}"
+            )
         except Exception as exc:
             row = {
                 "phase": "test",
