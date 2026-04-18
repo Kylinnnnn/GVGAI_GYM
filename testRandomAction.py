@@ -7,6 +7,7 @@ env.reset()
 score = 0
 for i in range(2000):
     action_id = env.action_space.sample()
+    # env.render()
     state, reward, isOver, info = env.step(action_id)
     score += reward
     print("Action " + str(action_id) + " played at game tick " + str(i+1) + ", reward=" + str(reward) + ", new score=" + str(score))

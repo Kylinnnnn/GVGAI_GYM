@@ -1,0 +1,21 @@
+{
+    "name": "GVGAI Dev Container (Venv + scipy 1.5.4)",
+    "image": "my_gvgai_env:latest",
+    // "build": { ... },  // 不再需要构建，已注释
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ]
+        }
+    },
+    // "postCreateCommand": "pip install -e .",  // 镜像已包含依赖，无需再运行
+    "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        // 重要：修改为你的虚拟环境中的 Python 解释器路径
+        "python.defaultInterpreterPath": "/workspaces/GVGAI_GYM/.venv/bin/python"
+    },
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "remoteUser": "root"
+}
